@@ -25,7 +25,6 @@ $(document).ready(function(){
     }
   });
 
-  $("#msgid").html("This is Hello World by JQuery");
 });
 
 class Minefield {
@@ -139,7 +138,12 @@ class Minefield {
       //case this.state_enum.OPENED_BOMB:
       //case this.state_enum.OPENED_NOBOMB:
       case this.state_enum.CLOSED_NOBOMB:
-        open_cell(this.id, row, col);
+        open_cell(this.id, row, col, false, 0);
+        //check nearby cells
+        break;
+      case this.state_enum.CLOSED_BOMB:
+        open_cell(this.id, row, col, true);
+        this.end_game(false);
         break;
     }
 
@@ -161,6 +165,14 @@ function flag_cell(id, col, row) {
 function unflag_cell(id, col, row) {
   $(id + " #cell-" + col + "-" + row).addClass('blank');
   $(id + " #cell-" + col + "-" + row).removeClass('flagged');
+}
+function open_cell(id, col, row, bomb, number) {
+  $(id + " #cell-" + col + "-" + row).removeClass('blank');
+  if(bomb) {
+    $(id + " #cell-" + col + "-" + row).addClass('bomb');
+  } else {
+    $(id + " #cell-" + col + "-" + row).addClass('nobomb').html(number);
+  }
 }
 
 function getRandomInt(min, max) {

@@ -30,3 +30,6 @@
 .bomb {
   background: red;
 }
+.nobomb {
+  background: white;
+}
