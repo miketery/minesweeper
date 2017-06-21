@@ -12,12 +12,23 @@ $(document).ready(function(){
   minefield.build_minefield();
   minefield.populate_bombs();
   
+  $(".cell").mousedown(function(event) {
+    switch (event.which) {
+      case 1:
+        minefield.left_click(this);
+        break;
+      case 3:
+        minefield.right_click(this);
+        break;
+      default:
+        minefield.left_click(this);
+    }
+  });
+
   $("#msgid").html("This is Hello World by JQuery");
 });
 
 class Minefield {
-  
-  
   constructor(id, cols, rows, difficulty) {
     this.id = id;
     this.cols = cols;
@@ -31,15 +42,20 @@ class Minefield {
       CLOSED_BOMB: 1,
       OPENED_NOBOMB: 2,
       OPENED_BOMB: 3,
-      FLAGGED: 4
+      FLAGGED_NOBOMB: 4,
+      FLAGGED_BOMB: 5
     };
   }
-
+ get_coor(cell) {
+    var row = $(cell).attr('row');
+    var col = $(cell).attr('col');
+    console.log(row+'  '+col);
+  }
   build_minefield() {
     for(var i = 0; i < this.rows; i++) {
       var $row = $("<div />", { class: 'row'});
       for(var j = 0; j < this.cols; j++) {
-        var $cell = $("<div />", { class: 'cell blank', id: 'cell-'+i+'-'+j});
+        var $cell = $("<div />", { class: 'cell blank', id: 'cell-'+i+'-'+j, row: i, col: j});
         $row.append($cell);
       }
       $(this.id).append($row.clone());
@@ -52,25 +68,40 @@ class Minefield {
     for(var i = 0; i < this.rows; i++) {
       this.state[i] = new Array(this.cols).fill(this.state_enum.CLOSED_NOBOMB);
     }
-
-    //populate with bombs
-    var populated = 0;
-
-    //randomly assign bombs
+    //populate and randomely assign bombs
+    var bomb_population = 0;
     while(populated < this.num_bombs) {
       var row = getRandomInt(0, this.rows);
       var col = getRandomInt(0, this.cols);
       if(this.state[row][col] == this.state_enum.CLOSED_NOBOMB) {
         this.state[row][col] = this.state_enum.CLOSED_BOMB;
-        populated++;
+        bomb_population++;
       }
     }
     console.log("Number of bombs being populated: " + populated);
-    console.log(this.state);
   }
-
+  right_click(cell) {
+    var row,col = this.get_coor(cell);
+    console.log("Right click at:" + row + ", " + col);
+    switch(this.state[row][col]) {
+      case this.state_enum.CLOSED_BOMB:
+        this.state[row][col] = this.state_enum.FLAGGED_BOMB;
+        this.flagged++;
+        break;
+      //case this.state_enum.FLAGGED_BOMB:
+      //  this.s 
+    }
+    //if(this.state[row][col] == CLOSED_BOMB || t
+  }
+  left_click(cell) {
+    var row,col = this.get_coor(cell);
+    console.log("Left click at:" + row + ", " + col);
+  }
+ 
 
 }
+
+
 function getRandomInt(min, max) {
   min = Math.ceil(min);
   max = Math.floor(max);

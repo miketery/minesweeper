@@ -5,12 +5,17 @@
 }
 .cell {
   display: inline-block;
-  margin: 2px;
+  margin: 1px;
+  margin-bottom: 0px;
+  border: 2px black solid;
   height: 15px;
   width: 15px;
 }
 .blank {
-  background: grey;
+  background: #666;
+}
+.blank:hover {
+  background: #aaa;
 }
 .number {
   background: white;
