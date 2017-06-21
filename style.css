@@ -1,0 +1,20 @@
+.row {
+  display: block;
+  margin: 0px;
+  padding: 0px;
+}
+.cell {
+  display: inline-block;
+  margin: 2px;
+  height: 15px;
+  width: 15px;
+}
+.blank {
+  background: grey;
+}
+.number {
+  background: white;
+}
+.bomb {
+  background: red;
+}
