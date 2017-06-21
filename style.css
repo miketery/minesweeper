@@ -8,8 +8,17 @@
   margin: 1px;
   margin-bottom: 0px;
   border: 2px black solid;
-  height: 15px;
+  height: 16px;
+  width: 16px;
+  padding: 8px;
+}
+.cell span {
+  float: left;
+  left-margin: 15px;
+  size: 15px;
+  margin: auto;
   width: 15px;
+  text-align: center;
 }
 .blank {
   background: #666;

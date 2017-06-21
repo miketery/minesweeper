@@ -1,11 +1,11 @@
 $(document).ready(function(){
   console.log("Starting application: Minesweepr");
 
-  //Future: make these user inputs
+  //Future: make these user defined during game setup
   //configurations
   var cols = 10;
   var rows = 10;
-  var difficulty = 0.25; //mine density 0-1
+  var difficulty = 0.33; //mine density 0-1
   
   var minefield = new Minefield("#minefield", cols, rows, difficulty);
 
@@ -33,9 +33,11 @@ class Minefield {
     this.cols = cols;
     this.rows = rows;
     this.difficulty = difficulty;
-    this.num_bombs = Math.floor(cols * rows * difficulty);
+    this.total_cells = cols * rows;
+    this.num_bombs = Math.floor(this.total_cells * difficulty);
     this.flagged = 0;
     this.false_flagged = 0;
+    this.opened = 0;
     this.game_over = false;
     this.state_enum = {
       CLOSED_NOBOMB: 0,
@@ -47,8 +49,8 @@ class Minefield {
     };
   }
  get_coordinates(cell) {
-    var row = $(cell).attr('row');
-    var col = $(cell).attr('col');
+    var row = parseInt($(cell).attr('row'));
+    var col = parseInt($(cell).attr('col'));
     console.log(row+'  '+col);
     return [row, col];
   }
@@ -66,9 +68,8 @@ class Minefield {
   populate_bombs() {
     //construct 2D array to hold state
     this.state = new Array(this.rows);
-    for(var i = 0; i < this.rows; i++) {
+    for(var i = 0; i < this.rows; i++) 
       this.state[i] = new Array(this.cols).fill(this.state_enum.CLOSED_NOBOMB);
-    }
     //populate and randomely assign bombs
     var bomb_population = 0;
     while(bomb_population < this.num_bombs) {
@@ -89,14 +90,7 @@ class Minefield {
     }
     var [row,col] = this.get_coordinates(cell);
     console.log("Right click at:" + row + ", " + col);
-    console.log("State before: " + this.state[row][col]);
     switch(this.state[row][col]) {
-      //already opened nothing to do
-      case this.state_enum.OPENED_BOMB:
-        console.log("ERROR: shouldn't get here - since game is lost...");
-        break;
-      case this.state_enum.OPENED_NOBOMB:
-        break;
       //closed we flag it
       case this.state_enum.CLOSED_BOMB:
         this.state[row][col] = this.state_enum.FLAGGED_BOMB;
@@ -123,37 +117,76 @@ class Minefield {
         console.log("ERROR: hit deafult on right click");
         break;
     }
-    console.log("State after: " + this.state[row][col]);
     this.check_win(); 
   }
 
   //FOR OPENING CELLS
   left_click(cell) {
-    if(this.game_over) {
+    if(this.game_over)
       return;
-    }
     var [row, col] = this.get_coordinates(cell);
     console.log("Left click at:" + row + ", " + col);
     switch(this.state[row][col]) {
-      //case this.state_enum.OPENED_BOMB:
-      //case this.state_enum.OPENED_NOBOMB:
       case this.state_enum.CLOSED_NOBOMB:
-        open_cell(this.id, row, col, false, 0);
-        //check nearby cells
+        this.state[row][col] = this.state_enum.OPEN_NOBOMB;
+        var num = this.nearby_count(row, col);
+        open_cell(this.id, row, col, false, num);
+        this.opened++;
         break;
       case this.state_enum.CLOSED_BOMB:
         open_cell(this.id, row, col, true);
-        this.end_game(false);
+        this.game_over = true;
+        alert("You Lose");
         break;
     }
-
     this.check_win();
   }
   check_win() {
-    if(this.flagged == this.num_bombs && this.false_flagged == 0) {
-      console.log("YOU WIN");
-      this.game_over = true;
+    if(this.flagged == this.num_bombs && this.false_flagged == 0)
+      this.win()
+    else if(this.opened + this.num_bombs == this.total_cells)
+      this.win();
+  }
+  win() {
+    console.log("YOU WIN");
+    alert("you win");
+    this.game_over = true;
+  }
+  lose() {
+    console.log("YOU LOSE");
+    alert("you lose");
+    this.game_over = true;
+  }
+  nearby_count(row, col) {
+    console.log(row + '-' + col);
+    console.log(this.rows + '-' + this.cols);
+    var min_row = Math.max(0, row-1);
+    var max_row = Math.min(this.rows-1, row+1);
+    var min_col = Math.max(0, col-1);
+    var max_col = Math.min(this.cols-1, col+1);
+    console.log(min_row + '-' + max_row + '-' + min_col + '-' + max_col);
+    var count = 0;
+    for(var y = min_row; y <= max_row; y++) {
+      for(var x = min_col; x <= max_col; x++) {
+        if(x != col || y != row) {
+          console.log(y+', '+x+': '+this.state[y][x]);
+          if(this.state[y][x] == this.state_enum.CLOSED_BOMB || this.state[y][x] == this.state_enum.FLAGGED_BOMB) 
+            count++;
+        }
+      }
     }
+    console.log('count: '+count);
+    if(count == 0) {
+      //open nearby
+      for(var y = min_row; y <= max_row; y++) {
+        for(var x = min_col; x <= max_col; x++) {
+          if(x != col || y != row)
+            this.left_click($(this.id + " #cell-" + y + "-" + x));
+        }
+      }
+      return '';
+    }
+    return count;
   }
  
 
@@ -171,7 +204,7 @@ function open_cell(id, col, row, bomb, number) {
   if(bomb) {
     $(id + " #cell-" + col + "-" + row).addClass('bomb');
   } else {
-    $(id + " #cell-" + col + "-" + row).addClass('nobomb').html(number);
+    $(id + " #cell-" + col + "-" + row).addClass('nobomb').html('<span>'+number+'</span>');
   }
 }
 
@@ -180,18 +213,3 @@ function getRandomInt(min, max) {
   max = Math.floor(max);
   return Math.floor(Math.random() * (max - min)) + min; //The maximum is exclusive and the minimum is inclusive
 }
-/*
-  static 
-
-    //populate bombs and states of saures
-    //0 - unopened and no bomb
-    //1 - unopened and bomb
-    //2 - opened 
-    var state = new Array(rows);
-    for(var i = 0; i < cols; i++) {
-      
-    }
-    var bombs = 0;
-    console.log("Total Bombs: " + Math.floor(length(state)));
-    //while(bombs < floorlen(state) * 
-*/
