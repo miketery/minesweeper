@@ -17,6 +17,13 @@
 .blank:hover {
   background: #aaa;
 }
+.flagged {
+  background: #6495ED;
+}
+.flagged:hover {
+  background: #A4C5FF;
+}
+
 .number {
   background: white;
 }

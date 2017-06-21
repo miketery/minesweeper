@@ -36,6 +36,7 @@ class Minefield {
     this.difficulty = difficulty;
     this.num_bombs = Math.floor(cols * rows * difficulty);
     this.flagged = 0;
+    this.false_flagged = 0;
     this.game_over = false;
     this.state_enum = {
       CLOSED_NOBOMB: 0,
@@ -46,10 +47,11 @@ class Minefield {
       FLAGGED_BOMB: 5
     };
   }
- get_coor(cell) {
+ get_coordinates(cell) {
     var row = $(cell).attr('row');
     var col = $(cell).attr('col');
     console.log(row+'  '+col);
+    return [row, col];
   }
   build_minefield() {
     for(var i = 0; i < this.rows; i++) {
@@ -70,7 +72,7 @@ class Minefield {
     }
     //populate and randomely assign bombs
     var bomb_population = 0;
-    while(populated < this.num_bombs) {
+    while(bomb_population < this.num_bombs) {
       var row = getRandomInt(0, this.rows);
       var col = getRandomInt(0, this.cols);
       if(this.state[row][col] == this.state_enum.CLOSED_NOBOMB) {
@@ -78,29 +80,88 @@ class Minefield {
         bomb_population++;
       }
     }
-    console.log("Number of bombs being populated: " + populated);
+    console.log("Number of bombs being populated: " + bomb_population);
   }
+
+  //MAINLY FOR FLAGGING AND UNFLAGGING
   right_click(cell) {
-    var row,col = this.get_coor(cell);
+    if(this.game_over) {
+      return;
+    }
+    var [row,col] = this.get_coordinates(cell);
     console.log("Right click at:" + row + ", " + col);
+    console.log("State before: " + this.state[row][col]);
     switch(this.state[row][col]) {
+      //already opened nothing to do
+      case this.state_enum.OPENED_BOMB:
+        console.log("ERROR: shouldn't get here - since game is lost...");
+        break;
+      case this.state_enum.OPENED_NOBOMB:
+        break;
+      //closed we flag it
       case this.state_enum.CLOSED_BOMB:
         this.state[row][col] = this.state_enum.FLAGGED_BOMB;
         this.flagged++;
+        flag_cell(this.id, row, col);
         break;
-      //case this.state_enum.FLAGGED_BOMB:
-      //  this.s 
+      case this.state_enum.CLOSED_NOBOMB:
+        this.state[row][col] = this.state_enum.FLAGGED_NOBOMB;
+        this.false_flag++;
+        flag_cell(this.id, row, col);
+        break;
+      //already flagged - unflag it
+      case this.state_enum.FLAGGED_BOMB:
+        this.state[row][col] = this.state_enum.CLOSED_BOMB;
+        this.flagged--;
+        unflag_cell(this.id, row, col);
+        break;
+      case this.state_enum.FLAGGED_NOBOMB:
+        this.state[row][col] = this.state_enum.CLOSED_NOBOMB;
+        this.false_flag--;
+        unflag_cell(this.id, row, col);
+        break;
+      default:
+        console.log("ERROR: hit deafult on right click");
+        break;
     }
-    //if(this.state[row][col] == CLOSED_BOMB || t
+    console.log("State after: " + this.state[row][col]);
+    this.check_win(); 
   }
+
+  //FOR OPENING CELLS
   left_click(cell) {
-    var row,col = this.get_coor(cell);
+    if(this.game_over) {
+      return;
+    }
+    var [row, col] = this.get_coordinates(cell);
     console.log("Left click at:" + row + ", " + col);
+    switch(this.state[row][col]) {
+      //case this.state_enum.OPENED_BOMB:
+      //case this.state_enum.OPENED_NOBOMB:
+      case this.state_enum.CLOSED_NOBOMB:
+        open_cell(this.id, row, col);
+        break;
+    }
+
+    this.check_win();
+  }
+  check_win() {
+    if(this.flagged == this.num_bombs && this.false_flagged == 0) {
+      console.log("YOU WIN");
+      this.game_over = true;
+    }
   }
  
 
 }
-
+function flag_cell(id, col, row) {
+  $(id + " #cell-" + col + "-" + row).addClass('flagged');
+  $(id + " #cell-" + col + "-" + row).removeClass('blank');
+}
+function unflag_cell(id, col, row) {
+  $(id + " #cell-" + col + "-" + row).addClass('blank');
+  $(id + " #cell-" + col + "-" + row).removeClass('flagged');
+}
 
 function getRandomInt(min, max) {
   min = Math.ceil(min);
