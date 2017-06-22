@@ -5,13 +5,14 @@ $(document).ready(function(){
   //configurations
   var cols = 10;
   var rows = 10;
-  var difficulty = 0.33; //mine density 0-1
+  var difficulty = 0.05; //mine density 0-1
   
   var minefield = new Minefield("#minefield", cols, rows, difficulty);
 
   minefield.build_minefield();
   minefield.populate_bombs();
   
+  //ref: https://stackoverflow.com/questions/1206203/how-to-distinguish-between-left-and-right-mouse-click-with-jquery
   $(".cell").mousedown(function(event) {
     switch (event.which) {
       case 1:
@@ -24,7 +25,6 @@ $(document).ready(function(){
         minefield.left_click(this);
     }
   });
-
 });
 
 class Minefield {
@@ -48,10 +48,9 @@ class Minefield {
       FLAGGED_BOMB: 5
     };
   }
- get_coordinates(cell) {
+  get_coordinates(cell) {
     var row = parseInt($(cell).attr('row'));
     var col = parseInt($(cell).attr('col'));
-    console.log(row+'  '+col);
     return [row, col];
   }
   build_minefield() {
@@ -64,13 +63,12 @@ class Minefield {
       $(this.id).append($row.clone());
     }
   }
-
   populate_bombs() {
     //construct 2D array to hold state
     this.state = new Array(this.rows);
     for(var i = 0; i < this.rows; i++) 
       this.state[i] = new Array(this.cols).fill(this.state_enum.CLOSED_NOBOMB);
-    //populate and randomely assign bombs
+    //randomely assign bombs
     var bomb_population = 0;
     while(bomb_population < this.num_bombs) {
       var row = getRandomInt(0, this.rows);
@@ -80,6 +78,7 @@ class Minefield {
         bomb_population++;
       }
     }
+    $('#bomb_population').html(bomb_population);
     console.log("Number of bombs being populated: " + bomb_population);
   }
 
@@ -129,14 +128,13 @@ class Minefield {
     switch(this.state[row][col]) {
       case this.state_enum.CLOSED_NOBOMB:
         this.state[row][col] = this.state_enum.OPEN_NOBOMB;
-        var num = this.nearby_count(row, col);
+        var num = this.nearby_count_and_open(row, col);
         open_cell(this.id, row, col, false, num);
         this.opened++;
         break;
       case this.state_enum.CLOSED_BOMB:
         open_cell(this.id, row, col, true);
-        this.game_over = true;
-        alert("You Lose");
+        this.lose()
         break;
     }
     this.check_win();
@@ -149,15 +147,15 @@ class Minefield {
   }
   win() {
     console.log("YOU WIN");
-    alert("you win");
+    $('#game_state').html('You Win!<br />Refresh to try again');
     this.game_over = true;
   }
   lose() {
     console.log("YOU LOSE");
-    alert("you lose");
+    $('#game_state').html('You Lose :(<br />Refresh to try again');
     this.game_over = true;
   }
-  nearby_count(row, col) {
+  nearby_count_and_open(row, col) {
     console.log(row + '-' + col);
     console.log(this.rows + '-' + this.cols);
     var min_row = Math.max(0, row-1);
@@ -208,6 +206,7 @@ function open_cell(id, col, row, bomb, number) {
   }
 }
 
+//ref: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/random
 function getRandomInt(min, max) {
   min = Math.ceil(min);
   max = Math.floor(max);
