@@ -1,3 +1,9 @@
+/*
+ * Minesweeper jQuery App
+ * Author: Mike Tery
+ * Date: 2017-06-21
+ */
+
 $(document).ready(function(){
   console.log("Starting application: Minesweepr");
 
